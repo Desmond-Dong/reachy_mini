@@ -229,8 +229,8 @@ class SoundDeviceAudio(AudioBase):
         """
         try:
             if self._is_recording and self._input_stream is not None:
-                self._input_stream.stop()  # type: ignore[attr-defined]
-                self._input_stream.close()  # type: ignore[attr-defined]
+                self._input_stream.stop()
+                self._input_stream.close()
                 self._input_stream = None
                 object.__setattr__(self, '_is_recording', False)
                 self.logger.info("SoundDevice audio input stream closed.")
@@ -438,7 +438,4 @@ class SoundDeviceAudio(AudioBase):
                 self.stop_playing()
         except Exception:
             # Ignore errors in destructor
-            return
             pass
-        except IndexError:
-            return 0

@@ -315,7 +315,7 @@ class ZenohClient(AbstractClient):
     def get_current_head_pose(self) -> npt.NDArray[np.float64]:
         """Get the current head pose."""
         assert self._last_head_pose is not None, "No head pose received yet."
-        return self._last_head_pose.copy()  # type: ignore[no-any-return]
+        return self._last_head_pose.copy().astype(np.float64)
 
     def send_task_request(self, task_req: AnyTaskRequest) -> UUID:
         """Send a task request to the server."""
@@ -364,7 +364,7 @@ class TaskState:
     error: str | None
 
 
-def _zenoh_client_del(self: ZenohClient) -> None:  # type: ignore[misc]
+def _zenoh_client_del(self: ZenohClient) -> None:
     """Destructor to ensure Zenoh resources are released."""
     try:
         if hasattr(self, 'session') and self.session:

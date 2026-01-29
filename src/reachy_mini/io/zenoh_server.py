@@ -36,6 +36,7 @@ class ZenohServer(AbstractServer):
         self.prefix = prefix
         self.localhost_only = localhost_only
         self.backend = backend
+        self.logger = logger
 
         self._lock = threading.Lock()
         self._cmd_event = threading.Event()
