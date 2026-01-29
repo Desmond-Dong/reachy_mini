@@ -170,6 +170,7 @@ class Daemon:
         self._status.state = DaemonState.STARTING
 
         try:
+            self.logger.info(f"Initializing backend: sim={sim}, mockup_sim={mockup_sim}")
             self.backend = self._setup_backend(
                 wireless_version=self.wireless_version,
                 sim=sim,
@@ -367,9 +368,11 @@ class Daemon:
             self._thread_event_publish_status.set()
 
             if self.websocket_server is not None:
+                self.logger.info("Stopping WebSocket server")
                 self.websocket_server.stop()
 
             if self._webrtc:
+                self.logger.info("Pausing WebRTC")
                 # We use pause() instead of stop() to keep the signalling server running and the producer registered, allowing proper restart.
                 self._webrtc.pause()
 
@@ -388,6 +391,7 @@ class Daemon:
                     self._status.state = DaemonState.STOPPING
 
             self.backend.should_stop.set()
+            self.logger.info("Stopping backend threads")
             self.backend_run_thread.join(timeout=5.0)
             if self.backend_run_thread.is_alive():
                 self.logger.warning("Backend did not stop in time, forcing shutdown.")
@@ -401,6 +405,7 @@ class Daemon:
             self.backend.ready.clear()
 
             # zenoh server must be closed after backend finishes to publish all data
+            self.logger.info("Closing Zenoh server")
             self.zenoh_server.stop()
 
             if self._status.state != DaemonState.ERROR:
