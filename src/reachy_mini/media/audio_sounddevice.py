@@ -227,11 +227,16 @@ class SoundDeviceAudio(AudioBase):
 
         See AudioBase.stop_recording() for complete documentation.
         """
-        if self._is_recording:
-            self._input_stream.stop()  # type: ignore[attr-defined]
-            self._input_stream.close()  # type: ignore[attr-defined]
-            self._input_stream = None
-            self.logger.info("SoundDevice audio stream closed.")
+        try:
+            if self._is_recording and self._input_stream is not None:
+                self._input_stream.stop()  # type: ignore[attr-defined]
+                self._input_stream.close()  # type: ignore[attr-defined]
+                self._input_stream = None
+                self._is_recording = False
+                self.logger.info("SoundDevice audio input stream closed.")
+        except Exception as e:
+            self.logger.error(f"Error stopping audio recording: {e}", exc_info=True)
+            self._is_recording = False
 
     def push_audio_sample(self, data: npt.NDArray[np.float32]) -> None:
         """Push audio data to the output device.
@@ -337,12 +342,17 @@ class SoundDeviceAudio(AudioBase):
 
         See AudioBase.stop_playing() for complete documentation.
         """
-        if self._output_stream is not None:
-            self._output_stream.stop()
-            self._output_stream.close()
-            self._output_stream = None
-            self.clear_output_buffer()
-            self.logger.info("SoundDevice audio output stream closed.")
+        try:
+            if self._output_stream is not None:
+                self._output_stream.stop()
+                self._output_stream.close()
+                self._output_stream = None
+                self.clear_output_buffer()
+                self._is_playing = False
+                self.logger.info("SoundDevice audio output stream closed.")
+        except Exception as e:
+            self.logger.error(f"Error stopping audio playback: {e}", exc_info=True)
+            self._is_playing = False
 
     def play_sound(self, sound_file: str) -> None:
         """Play a sound file.
@@ -418,5 +428,16 @@ class SoundDeviceAudio(AudioBase):
                 if kind == "input"
                 else int(sd.default.device[0])
             )
+    
+    def __del__(self) -> None:
+        """Destructor to ensure audio resources are released."""
+        try:
+            if hasattr(self, '_is_recording') and self._is_recording:
+                self.stop_recording()
+            if hasattr(self, '_is_playing') and self._is_playing:
+                self.stop_playing()
+        except Exception:
+            # Ignore errors in destructor
+            pass
         except IndexError:
             return 0

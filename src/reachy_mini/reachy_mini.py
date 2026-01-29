@@ -127,14 +127,16 @@ class ReachyMini:
 
         self.media_manager = self._configure_mediamanager(media_backend, log_level)
 
-    def __del__(self) -> None:
-        """Destroy the Reachy Mini instance.
-
-        The client is disconnected explicitly to avoid a thread pending issue.
-
-        """
-        if hasattr(self, "client"):
-            self.client.disconnect()
+def __del__(self) -> None:
+        """Destroy the Reachy Mini instance."""
+        try:
+            if hasattr(self, "client") and self.client is not None:
+                self.client.disconnect()
+            if hasattr(self, "media_manager") and self.media_manager is not None:
+                self.media_manager.close()
+        except Exception:
+            # Ignore errors in destructor
+            pass
 
     def __enter__(self) -> "ReachyMini":
         """Context manager entry point for Reachy Mini."""

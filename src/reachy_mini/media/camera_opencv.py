@@ -164,6 +164,19 @@ class OpenCVCamera(CameraBase):
 
         See CameraBase.close() for complete documentation.
         """
-        if self.cap is not None:
-            self.cap.release()
-            self.cap = None
+        try:
+            if self.cap is not None:
+                self.cap.release()
+                self.cap = None
+                self.logger.debug("OpenCV camera released")
+        except Exception as e:
+            self.logger.error(f"Error releasing OpenCV camera: {e}", exc_info=True)
+    
+    def __del__(self) -> None:
+        """Destructor to ensure camera resources are released."""
+        try:
+            if hasattr(self, 'cap') and self.cap is not None:
+                self.close()
+        except Exception:
+            # Ignore errors in destructor
+            pass
