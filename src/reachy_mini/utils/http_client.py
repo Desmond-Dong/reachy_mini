@@ -40,6 +40,7 @@ class RetryConfig:
             exponential_backoff: Use exponential backoff for delays (default: True)
             retryable_statuses: HTTP status codes that trigger retry (default: {408, 429, 500, 502, 503, 504})
             retryable_exceptions: Exception types that trigger retry (default: None)
+
         """
         self.max_attempts = max_attempts
         self.base_delay = base_delay
@@ -58,6 +59,7 @@ class HttpClient:
         Args:
             timeout: Request timeout in seconds (default: 30.0)
             retry_config: Retry configuration (default: default RetryConfig)
+
         """
         if not HTTPX_AVAILABLE:
             logger.warning("httpx not available, using basic HTTP client without retry")
@@ -87,6 +89,7 @@ class HttpClient:
 
         Raises:
             Exception: If all retry attempts fail
+
         """
         if self._use_httpx:
             return await self._get_with_retry(url, params=params, headers=headers)
@@ -158,12 +161,12 @@ class HttpClient:
         params: Optional[dict[str, Any]] = None,
         headers: Optional[dict[str, str]] = None,
     ) -> dict[str, Any]:
-        """Basic GET request without retry (fallback)."""
+        """Perform basic GET request without retry (fallback)."""
         # This is a minimal fallback implementation
         # In production, you'd want to use a proper HTTP library
+        import json
         import urllib.parse
         import urllib.request
-        import json
 
         if params:
             url += "?" + urllib.parse.urlencode(params)
@@ -213,7 +216,7 @@ async def get_with_retry(
     max_attempts: int = 3,
     timeout: float = 30.0,
 ) -> dict[str, Any]:
-    """Convenience function to perform GET request with retry.
+    """Perform GET request with retry.
 
     Args:
         url: URL to request
@@ -234,6 +237,7 @@ async def get_with_retry(
         ...     max_attempts=3,
         ...     timeout=5.0
         ... )
+
     """
     retry_config = RetryConfig(max_attempts=max_attempts)
     async with HttpClient(timeout=timeout, retry_config=retry_config) as client:
