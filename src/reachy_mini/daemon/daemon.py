@@ -270,7 +270,7 @@ class Daemon:
                     self.websocket_audio_sender.stop_flag = True
                 self.backend = None
 
-        self.backend_run_thread = Thread(target=backend_wrapped_run)
+        self.backend_run_thread = Thread(target=backend_wrapped_run, daemon=True)
         self.backend_run_thread.start()
 
         if not self.backend.ready.wait(timeout=2.0):
@@ -392,6 +392,10 @@ class Daemon:
             if self.backend_run_thread.is_alive():
                 self.logger.warning("Backend did not stop in time, forcing shutdown.")
                 self._status.state = DaemonState.ERROR
+                # Even though thread is daemon, log that it will be cleaned up on exit
+                self.logger.debug("Backend thread is daemon and will be cleaned up on process exit")
+            else:
+                self.logger.info("Backend thread stopped successfully")
 
             self.backend.close()
             self.backend.ready.clear()

@@ -141,10 +141,39 @@ class GStreamerAudio(AudioBase):
 
     def __del__(self) -> None:
         """Destructor to ensure gstreamer resources are released."""
-        super().__del__()
-        self._loop.quit()
-        self._bus_record.remove_watch()
-        self._bus_playback.remove_watch()
+        try:
+            # Clean up main loop
+            if hasattr(self, '_loop') and self._loop and not self._loop.is_running():
+                self._loop.quit()
+            
+            # Clean up bus watchers
+            if hasattr(self, '_bus_record') and self._bus_record:
+                try:
+                    self._bus_record.remove_watch()
+                except Exception:
+                    pass
+            
+            if hasattr(self, '_bus_playback') and self._bus_playback:
+                try:
+                    self._bus_playback.remove_watch()
+                except Exception:
+                    pass
+            
+            # Clean up pipelines
+            if hasattr(self, '_pipeline_record') and self._pipeline_record:
+                try:
+                    self._pipeline_record.set_state(Gst.State.NULL)
+                except Exception:
+                    pass
+            
+            if hasattr(self, '_pipeline_playback') and self._pipeline_playback:
+                try:
+                    self._pipeline_playback.set_state(Gst.State.NULL)
+                except Exception:
+                    pass
+        except Exception:
+            # Ignore all errors in destructor
+            pass
 
     def set_max_output_buffers(self, max_buffers: int) -> None:
         """Set the maximum number of output buffers to queue in the player.

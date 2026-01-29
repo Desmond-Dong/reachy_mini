@@ -229,8 +229,28 @@ class GStreamerCamera(CameraBase):
 
     def close(self) -> None:
         """Release the camera resource."""
-        self._loop.quit()
-        self.pipeline.set_state(Gst.State.NULL)
+        try:
+            # Quit the main loop first to stop the bus thread
+            if self._loop and not self._loop.is_running():
+                self.logger.debug("Main loop already stopped")
+            elif self._loop:
+                self._loop.quit()
+                self.logger.debug("Main loop quit signal sent")
+            
+            # Wait for bus thread to finish
+            if self._thread_bus_calls and self._thread_bus_calls.is_alive():
+                self._thread_bus_calls.join(timeout=2.0)
+                if self._thread_bus_calls.is_alive():
+                    self.logger.warning("Bus thread did not stop in time")
+                else:
+                    self.logger.debug("Bus thread stopped successfully")
+            
+            # Set pipeline to NULL state
+            if self.pipeline:
+                self.pipeline.set_state(Gst.State.NULL)
+                self.logger.debug("Pipeline set to NULL state")
+        except Exception as e:
+            self.logger.error(f"Error while closing camera: {e}", exc_info=True)
 
     def get_video_device(self) -> Tuple[str, Optional[CameraSpecs]]:
         """Use Gst.DeviceMonitor to find the unix camera path /dev/videoX.
@@ -272,6 +292,18 @@ class GStreamerCamera(CameraBase):
                         self.logger.debug(f"Found {cam_name} camera")
                         monitor.stop()
                         return cam_name, camera_specs
-        monitor.stop()
-        self.logger.warning("No camera found.")
+monitor.stop()
+        
+        self.logger.debug("No camera found, returning empty path")
         return "", None
+
+    def __del__(self) -> None:
+        """Destructor to ensure GStreamer resources are released."""
+        try:
+            if hasattr(self, '_loop') and self._loop:
+                self._loop.quit()
+            if hasattr(self, 'pipeline') and self.pipeline:
+                self.pipeline.set_state(Gst.State.NULL)
+        except Exception as e:
+            # Ignore errors in destructor
+            pass
