@@ -13,7 +13,7 @@ try:
     HTTPX_AVAILABLE = True
 except ImportError:
     HTTPX_AVAILABLE = False
-    httpx = None
+    httpx = None  # type: ignore[assignment]
 
 
 logger = logging.getLogger(__name__)
@@ -119,7 +119,7 @@ class HttpClient:
                     await self._wait_before_retry(attempt)
                     continue
 
-                return response.json()
+                return response.json()  # type: ignore[no-any-return]
 
             except httpx.HTTPStatusError as e:
                 last_exception = e
@@ -133,7 +133,7 @@ class HttpClient:
                     raise
 
             except (httpx.TimeoutException, httpx.ConnectError, httpx.RemoteProtocolError) as e:
-                last_exception = e
+                last_exception = e  # type: ignore[assignment]
                 self.logger.warning(
                     f"Network error for {url}: {type(e).__name__}, "
                     f"retrying (attempt {attempt}/{self.retry_config.max_attempts})"
@@ -141,8 +141,8 @@ class HttpClient:
                 await self._wait_before_retry(attempt)
 
             except Exception as e:
-                if self.retry_config.retryable_exceptions and isinstance(e, self.retry_config.retryable_exceptions):
-                    last_exception = e
+                if self.retry_config.retryable_exceptions and any(isinstance(e, exc) for exc in self.retry_config.retryable_exceptions):
+                    last_exception = e  # type: ignore[assignment]
                     self.logger.warning(
                         f"Exception for {url}: {type(e).__name__}, "
                         f"retrying (attempt {attempt}/{self.retry_config.max_attempts})"
@@ -174,7 +174,7 @@ class HttpClient:
         req = urllib.request.Request(url, headers=headers or {})
         try:
             with urllib.request.urlopen(req, timeout=30) as response:
-                return json.loads(response.read().decode())
+                return json.loads(response.read().decode())  # type: ignore[no-any-return]
         except Exception as e:
             self.logger.error(f"Basic HTTP request failed for {url}: {e}")
             raise
@@ -200,11 +200,11 @@ class HttpClient:
         if self._use_httpx and self._client:
             await self._client.aclose()
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> "HttpClient":
         """Async context manager entry."""
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         """Async context manager exit."""
         await self.close()
 
