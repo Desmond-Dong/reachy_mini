@@ -10,7 +10,9 @@ managing the robot's state.
 import argparse
 import asyncio
 import logging
+import time
 import types
+import uuid
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from pathlib import Path
@@ -236,6 +238,36 @@ def create_app(args: Args, health_check_event: asyncio.Event | None = None) -> F
         allow_headers=["*"],
     )
 
+    # Add detailed request logging middleware
+    @app.middleware("http")
+    async def log_requests(request: Request, call_next):
+        """Log all incoming requests with detailed information."""
+        request_id = str(uuid.uuid4())[:8]
+        start_time = time.time()
+
+        logger = logging.getLogger("reachy_mini.api")
+        logger.info(
+            f"[{request_id}] {request.method} {request.url.path} "
+            f"- Client: {request.client.host if request.client else 'unknown'}"
+        )
+
+        try:
+            response = await call_next(request)
+            duration = time.time() - start_time
+            logger.info(
+                f"[{request_id}] {response.status_code} - {duration:.3f}s "
+                f"- {request.method} {request.url.path}"
+            )
+            response.headers["X-Request-ID"] = request_id
+            return response
+        except Exception as e:
+            duration = time.time() - start_time
+            logger.error(
+                f"[{request_id}] ERROR: {str(e)} - {duration:.3f}s "
+                f"- {request.method} {request.url.path}"
+            )
+            raise
+
     STATIC_DIR = Path(__file__).parent / "dashboard" / "static"
     TEMPLATES_DIR = Path(__file__).parent / "dashboard" / "templates"
 
@@ -332,6 +364,17 @@ def run_app(args: Args) -> None:
             host=args.fastapi_host,
             port=args.fastapi_port,
             log_config=None,  # Don't override Python logging configuration
+            # Performance and stability configuration
+            workers=2 if args.wireless_version else 1,  # 2 workers for wireless, 1 for lite
+            limit_concurrency=100,  # Maximum concurrent connections
+            limit_max_requests=10000,  # Max requests per worker before restart
+            backlog=2048,  # Listen queue size
+            # Timeout configuration
+            timeout_keep_alive=5,  # 5 seconds keep-alive timeout
+            timeout_graceful_shutdown=10,  # Graceful shutdown timeout
+            # Security and logging
+            access_log=True,  # Enable access logs
+            use_headers=True,  # Use standard headers
         )
         server = uvicorn.Server(config)
 

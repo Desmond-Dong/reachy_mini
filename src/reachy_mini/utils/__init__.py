@@ -9,6 +9,8 @@ import numpy as np
 import numpy.typing as npt
 from scipy.spatial.transform import Rotation as R
 
+from .http_client import HttpClient, RetryConfig, get_with_retry
+
 
 def create_head_pose(
     x: float = 0,
