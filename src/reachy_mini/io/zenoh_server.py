@@ -179,7 +179,7 @@ class ZenohServer(AbstractServer):
                         self.backend.set_motor_control_mode(MotorControlMode.Enabled)
 
                 except ValueError as e:
-                    print(e)
+                    self.logger.error(f"Gravity compensation error: {e}", exc_info=True)
             if "automatic_body_yaw" in command:
                 self.backend.set_automatic_body_yaw(command["automatic_body_yaw"])
 
@@ -211,7 +211,7 @@ class ZenohServer(AbstractServer):
         elif isinstance(task_req.req, PlayMoveTaskRequest):
 
             def task() -> None:
-                print("PLAY MOVE")
+                self.logger.debug("Playing recorded move")
 
         else:
             assert False, f"Unknown task request type {task_req.req.__class__.__name__}"

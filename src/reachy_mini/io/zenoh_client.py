@@ -150,7 +150,71 @@ class ZenohClient(AbstractClient):
 
     def disconnect(self) -> None:
         """Disconnect the client from the server."""
-        self.session.close()  # type: ignore[no-untyped-call]
+        self._is_alive = False
+        
+        # Undeclare all subscribers and publishers
+        try:
+            if hasattr(self, 'joint_sub'):
+                self.joint_sub.undeclare()
+        except Exception as e:
+            logging.warning(f"Error undeclaring joint_sub: {e}")
+        
+        try:
+            if hasattr(self, 'pose_sub'):
+                self.pose_sub.undeclare()
+        except Exception as e:
+            logging.warning(f"Error undeclaring pose_sub: {e}")
+        
+        try:
+            if hasattr(self, 'recording_sub'):
+                self.recording_sub.undeclare()
+        except Exception as e:
+            logging.warning(f"Error undeclaring recording_sub: {e}")
+        
+        try:
+            if hasattr(self, 'status_sub'):
+                self.status_sub.undeclare()
+        except Exception as e:
+            logging.warning(f"Error undeclaring status_sub: {e}")
+        
+        try:
+            if hasattr(self, 'imu_sub'):
+                self.imu_sub.undeclare()
+        except Exception as e:
+            logging.warning(f"Error undeclaring imu_sub: {e}")
+        
+        try:
+            if hasattr(self, 'task_progress_sub'):
+                self.task_progress_sub.undeclare()
+        except Exception as e:
+            logging.warning(f"Error undeclaring task_progress_sub: {e}")
+        
+        try:
+            if hasattr(self, 'cmd_pub'):
+                self.cmd_pub.undeclare()
+        except Exception as e:
+            logging.warning(f"Error undeclaring cmd_pub: {e}")
+        
+        try:
+            if hasattr(self, 'task_request_pub'):
+                self.task_request_pub.undeclare()
+        except Exception as e:
+            logging.warning(f"Error undeclaring task_request_pub: {e}")
+        
+        # Close session
+        try:
+            self.session.close()  # type: ignore[no-untyped-call]
+            logging.info("Zenoh session closed successfully")
+        except Exception as e:
+            logging.error(f"Error closing Zenoh session: {e}", exc_info=True)
+    
+    def __enter__(self) -> "ZenohClient":
+        """Context manager entry point."""
+        return self
+    
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        """Context manager exit point."""
+        self.disconnect()
 
     def send_command(self, command: str) -> None:
         """Send a command to the server."""
@@ -298,3 +362,16 @@ class TaskState:
 
     event: threading.Event
     error: str | None
+
+
+# Add __del__ method to ZenohClient class
+def _zenoh_client_del(self: ZenohClient) -> None:
+    """Destructor to ensure Zenoh resources are released."""
+    try:
+        if hasattr(self, 'session') and self.session:
+            self.disconnect()
+    except Exception:
+        # Ignore errors in destructor
+        pass
+
+ZenohClient.__del__ = _zenoh_client_del
