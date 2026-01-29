@@ -132,13 +132,13 @@ class AsyncWebSocketAudioStreamer:
             if is_full or is_timed_out:
                 try:
                     # Send the aggregated buffer
-                    await ws.send(batch_buffer)
+                    await ws.send(bytes(batch_buffer))
 
                     # Reset
                     batch_buffer = bytearray()
                     last_activity = now
                 except Exception as e:
-                    logger.info(f"[WS-AUDIO] Send error: {e}")
+                    logger.error(f"[WS-AUDIO] Send error: {e}", exc_info=True)
                     break
 
             # 3. Keep-Alive Ping (Only if completely idle)

@@ -9,6 +9,7 @@ either on localhost only or to accept connections from other hosts.
 
 import asyncio
 import json
+import logging
 import threading
 from datetime import datetime
 
@@ -23,6 +24,8 @@ from reachy_mini.io.protocol import (
     TaskProgress,
     TaskRequest,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class ZenohServer(AbstractServer):

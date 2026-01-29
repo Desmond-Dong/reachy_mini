@@ -155,49 +155,49 @@ class ZenohClient(AbstractClient):
         # Undeclare all subscribers and publishers
         try:
             if hasattr(self, 'joint_sub'):
-                self.joint_sub.undeclare()
+                self.joint_sub.undeclare()  # type: ignore[no-untyped-call]
         except Exception as e:
             logging.warning(f"Error undeclaring joint_sub: {e}")
         
         try:
             if hasattr(self, 'pose_sub'):
-                self.pose_sub.undeclare()
+                self.pose_sub.undeclare()  # type: ignore[no-untyped-call]
         except Exception as e:
             logging.warning(f"Error undeclaring pose_sub: {e}")
         
         try:
             if hasattr(self, 'recording_sub'):
-                self.recording_sub.undeclare()
+                self.recording_sub.undeclare()  # type: ignore[no-untyped-call]
         except Exception as e:
             logging.warning(f"Error undeclaring recording_sub: {e}")
         
         try:
             if hasattr(self, 'status_sub'):
-                self.status_sub.undeclare()
+                self.status_sub.undeclare()  # type: ignore[no-untyped-call]
         except Exception as e:
             logging.warning(f"Error undeclaring status_sub: {e}")
         
         try:
             if hasattr(self, 'imu_sub'):
-                self.imu_sub.undeclare()
+                self.imu_sub.undeclare()  # type: ignore[no-untyped-call]
         except Exception as e:
             logging.warning(f"Error undeclaring imu_sub: {e}")
         
         try:
             if hasattr(self, 'task_progress_sub'):
-                self.task_progress_sub.undeclare()
+                self.task_progress_sub.undeclare()  # type: ignore[no-untyped-call]
         except Exception as e:
             logging.warning(f"Error undeclaring task_progress_sub: {e}")
         
         try:
             if hasattr(self, 'cmd_pub'):
-                self.cmd_pub.undeclare()
+                self.cmd_pub.undeclare()  # type: ignore[no-untyped-call]
         except Exception as e:
             logging.warning(f"Error undeclaring cmd_pub: {e}")
         
         try:
             if hasattr(self, 'task_request_pub'):
-                self.task_request_pub.undeclare()
+                self.task_request_pub.undeclare()  # type: ignore[no-untyped-call]
         except Exception as e:
             logging.warning(f"Error undeclaring task_request_pub: {e}")
         

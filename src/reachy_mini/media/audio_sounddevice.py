@@ -232,11 +232,11 @@ class SoundDeviceAudio(AudioBase):
                 self._input_stream.stop()  # type: ignore[attr-defined]
                 self._input_stream.close()  # type: ignore[attr-defined]
                 self._input_stream = None
-                self._is_recording = False
+                object.__setattr__(self, '_is_recording', False)
                 self.logger.info("SoundDevice audio input stream closed.")
         except Exception as e:
             self.logger.error(f"Error stopping audio recording: {e}", exc_info=True)
-            self._is_recording = False
+            object.__setattr__(self, '_is_recording', False)
 
     def push_audio_sample(self, data: npt.NDArray[np.float32]) -> None:
         """Push audio data to the output device.
@@ -348,11 +348,11 @@ class SoundDeviceAudio(AudioBase):
                 self._output_stream.close()
                 self._output_stream = None
                 self.clear_output_buffer()
-                self._is_playing = False
+                object.__setattr__(self, '_is_playing', False)
                 self.logger.info("SoundDevice audio output stream closed.")
         except Exception as e:
             self.logger.error(f"Error stopping audio playback: {e}", exc_info=True)
-            self._is_playing = False
+            object.__setattr__(self, '_is_playing', False)
 
     def play_sound(self, sound_file: str) -> None:
         """Play a sound file.
@@ -438,6 +438,7 @@ class SoundDeviceAudio(AudioBase):
                 self.stop_playing()
         except Exception:
             # Ignore errors in destructor
+            return
             pass
         except IndexError:
             return 0
