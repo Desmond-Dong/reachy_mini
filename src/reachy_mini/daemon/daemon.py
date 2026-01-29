@@ -590,7 +590,7 @@ class Daemon:
                     self.logger.error("Backend thread has stopped unexpectedly.")
                     self._status.state = DaemonState.ERROR
             except KeyboardInterrupt:
-                self.logger.warning("Daemon interrupted by user.")
+                self.logger.info("Daemon interrupted by user.")
             except Exception as e:
                 self.logger.error(f"An error occurred: {e}")
                 self._status.state = DaemonState.ERROR

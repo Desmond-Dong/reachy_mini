@@ -1,5 +1,6 @@
 """Utilities for managing the Reachy Mini daemon."""
 
+import logging
 import os
 import struct
 import subprocess
@@ -9,6 +10,8 @@ from typing import Any, List
 
 import psutil
 import serial.tools.list_ports
+
+logger = logging.getLogger(__name__)
 
 # Path to the unix socket created by WebRTC daemon for local camera access
 CAMERA_SOCKET_PATH = "/tmp/reachymini_camera_socket"
@@ -77,21 +80,21 @@ def daemon_check(spawn_daemon: bool, use_sim: bool) -> None:
     if spawn_daemon:
         daemon_is_running, pid, sim = is_python_script_running("reachy-mini-daemon")
         if daemon_is_running and sim == use_sim:
-            print(
+            logger.info(
                 f"Reachy Mini daemon is already running (PID: {pid}). "
                 "No need to spawn a new one."
             )
             return
         elif daemon_is_running and sim != use_sim:
-            print(
-                f"Reachy Mini daemon is already running (PID: {pid}) with a different configuration. "
+            logger.warning(
+                f"Reachy Mini daemon is already running (PID: {pid}) with a different configuration."
             )
-            print("Killing the existing daemon...")
+            logger.warning("Killing the existing daemon...")
             assert pid is not None, "PID should not be None if daemon is running"
             os.kill(pid, 9)
             time.sleep(1)
 
-        print("Starting a new daemon...")
+        logger.info("Starting a new daemon...")
         subprocess.Popen(
             ["reachy-mini-daemon", "--sim"] if use_sim else ["reachy-mini-daemon"],
             start_new_session=True,
@@ -144,7 +147,7 @@ def get_ip_address(ifname: str = "wlan0") -> str | None:
                 )[20:24]
             )
         except OSError:
-            print(f"Could not get IP address for interface {ifname}.")
+            logger.warning(f"Could not get IP address for interface {ifname}.")
             return None
     elif platform.system() == "Windows":
         import psutil
@@ -154,10 +157,10 @@ def get_ip_address(ifname: str = "wlan0") -> str | None:
             for snic in addrs[ifname]:
                 if snic.family == socket.AF_INET:
                     return str(snic.address)
-        print(f"Could not get IP address for interface {ifname} on Windows.")
+        logger.warning(f"Could not get IP address for interface {ifname} on Windows.")
         return None
     else:
-        print(f"Platform {platform.system()} not supported for get_ip_address.")
+        logger.warning(f"Platform {platform.system()} not supported for get_ip_address.")
         return None
 
 

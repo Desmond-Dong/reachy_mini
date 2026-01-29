@@ -82,7 +82,7 @@ class AsyncWebSocketAudioStreamer:
                             pass
 
             except Exception as e:
-                logger.info(f"[WS-AUDIO] Connection failed: {e}")
+                logger.error(f"[WS-AUDIO] Connection failed: {e}", exc_info=True)
                 await asyncio.sleep(1.0)
 
             self.connected.clear()

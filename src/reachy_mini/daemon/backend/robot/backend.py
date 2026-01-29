@@ -126,7 +126,7 @@ class RobotBackend(Backend):
                 self.bmi088 = BMI088(i2c_bus=4)
                 self.logger.info("BMI088 IMU initialized successfully")
             except Exception as e:
-                self.logger.warning(f"Failed to initialize IMU: {e}")
+                self.logger.error(f"Failed to initialize IMU: {e}", exc_info=True)
                 self.bmi088 = None
         else:
             self.bmi088 = None
@@ -332,6 +332,7 @@ class RobotBackend(Backend):
 
         self.c.enable_torque()
         self._torque_enabled = True
+        self.logger.info("Motors enabled (torque ON)")
 
     def disable_motors(self) -> None:
         """Disable the motors by turning the torque off."""
@@ -339,6 +340,7 @@ class RobotBackend(Backend):
 
         self.c.disable_torque()
         self._torque_enabled = False
+        self.logger.info("Motors disabled (torque OFF)")
 
     def set_head_operation_mode(self, mode: int) -> None:
         """Change the operation mode of the head motors.

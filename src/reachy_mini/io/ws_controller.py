@@ -84,7 +84,7 @@ class AsyncWebSocketController:
                     body_yaw=mov.get("body_yaw", 0.0),
                 )
             except Exception as e:
-                logger.debug("[Daemon] Error in goto_target: %s", e)
+                logger.error("[Daemon] Error in goto_target: %s", e, exc_info=True)
         elif typ == "ping":
             logger.debug("[Daemon] Ping received")
             return
@@ -109,7 +109,7 @@ class AsyncWebSocketController:
                         await self.on_command(data)
 
             except Exception as e:
-                logger.info("[WS] Connection failed: %s", e)
+                logger.error("[WS] Connection failed: %s", e, exc_info=True)
                 # small backoff before reconnect
                 await asyncio.sleep(1)
 
