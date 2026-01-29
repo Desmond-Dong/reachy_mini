@@ -237,6 +237,25 @@ class AsyncWebSocketAudioStreamer:
 
     def close(self) -> None:
         """Close the WebSocket audio streamer."""
+        logger.info("[WS-AUDIO] Closing audio streamer")
         self.stop_flag = True
+        
+        # Stop the event loop
         if self.loop.is_running():
             self.loop.call_soon_threadsafe(self.loop.stop)
+        
+        # Wait for the thread to finish
+        if self.thread.is_alive():
+            logger.debug("[WS-AUDIO] Waiting for streamer thread to stop")
+            self.thread.join(timeout=5.0)
+            if self.thread.is_alive():
+                logger.warning("[WS-AUDIO] Streamer thread did not stop in time")
+            else:
+                logger.debug("[WS-AUDIO] Streamer thread stopped successfully")
+        
+        # Clean up the event loop
+        try:
+            self.loop.close()
+            logger.debug("[WS-AUDIO] Event loop closed")
+        except Exception as e:
+            logger.warning(f"[WS-AUDIO] Error closing event loop: {e}")

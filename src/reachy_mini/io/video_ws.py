@@ -131,5 +131,25 @@ class AsyncWebSocketFrameSender:
 
     def close(self) -> None:
         """Close the WebSocket frame sender."""
+        logger.info("[WS Video] Closing frame sender")
         self.stop_flag = True
-        self.loop.call_soon_threadsafe(self.loop.stop)
+        
+        # Stop the event loop
+        if self.loop.is_running():
+            self.loop.call_soon_threadsafe(self.loop.stop)
+        
+        # Wait for the thread to finish
+        if self.thread.is_alive():
+            logger.debug("[WS Video] Waiting for sender thread to stop")
+            self.thread.join(timeout=5.0)
+            if self.thread.is_alive():
+                logger.warning("[WS Video] Sender thread did not stop in time")
+            else:
+                logger.debug("[WS Video] Sender thread stopped successfully")
+        
+        # Clean up the event loop
+        try:
+            self.loop.close()
+            logger.debug("[WS Video] Event loop closed")
+        except Exception as e:
+            logger.warning(f"[WS Video] Error closing event loop: {e}")

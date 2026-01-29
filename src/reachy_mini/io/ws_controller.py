@@ -115,6 +115,25 @@ class AsyncWebSocketController:
 
     def stop(self) -> None:
         """Stop the WebSocket controller."""
+        logger.info("[WS] Stopping WebSocket controller")
         self.stop_flag = True
+        
+        # Stop the event loop
         if self.loop.is_running():
-            self.loop.call_soon_threadsafe(lambda: None)
+            self.loop.call_soon_threadsafe(self.loop.stop)
+        
+        # Wait for the thread to finish
+        if self.thread.is_alive():
+            logger.debug("[WS] Waiting for controller thread to stop")
+            self.thread.join(timeout=5.0)
+            if self.thread.is_alive():
+                logger.warning("[WS] Controller thread did not stop in time")
+            else:
+                logger.debug("[WS] Controller thread stopped successfully")
+        
+        # Clean up the event loop
+        try:
+            self.loop.close()
+            logger.debug("[WS] Event loop closed")
+        except Exception as e:
+            logger.warning(f"[WS] Error closing event loop: {e}")
