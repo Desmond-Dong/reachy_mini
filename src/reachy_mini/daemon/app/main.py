@@ -240,7 +240,7 @@ def create_app(args: Args, health_check_event: asyncio.Event | None = None) -> F
 
     # Add detailed request logging middleware
     @app.middleware("http")
-    async def log_requests(request: Request, call_next):
+    async def log_requests(request: Request, call_next: Any) -> Any:
         """Log all incoming requests with detailed information."""
         request_id = str(uuid.uuid4())[:8]
         start_time = time.time()
@@ -374,7 +374,6 @@ def run_app(args: Args) -> None:
             timeout_graceful_shutdown=10,  # Graceful shutdown timeout
             # Security and logging
             access_log=True,  # Enable access logs
-            use_headers=True,  # Use standard headers
         )
         server = uvicorn.Server(config)
 

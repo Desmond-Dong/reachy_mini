@@ -91,11 +91,19 @@ async def get_daemon_status(daemon: Daemon = Depends(get_daemon)) -> DaemonStatu
 async def health_check(daemon: Daemon = Depends(get_daemon)) -> dict[str, Any]:
     """Detailed health check endpoint."""
     status = daemon.status()
+    backend_info = None
+    if status.backend_status:
+        backend_info = {
+            "type": type(status.backend_status).__name__,
+            "motor_control_mode": status.backend_status.motor_control_mode,
+            "error": status.backend_status.error,
+        }
+
     return {
         "status": "healthy" if status.state.value in ["running", "idle"] else "unhealthy",
         "daemon_status": status.state.value,
         "daemon_state": status.state,
-        "backend_status": status.backend_status.value if status.backend_status else None,
+        "backend_status": backend_info,
         "timestamp": time.time(),
         "wireless_version": status.wireless_version,
         "simulation_enabled": status.simulation_enabled,
