@@ -132,7 +132,7 @@ class AsyncWebSocketAudioStreamer:
             if is_full or is_timed_out:
                 try:
                     # Send the aggregated buffer
-                    await ws.send(batch_buffer)  # type: ignore
+                    await ws.send(batch_buffer)
 
                     # Reset
                     batch_buffer = bytearray()

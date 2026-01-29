@@ -127,7 +127,7 @@ class ReachyMini:
 
         self.media_manager = self._configure_mediamanager(media_backend, log_level)
 
-def __del__(self) -> None:
+    def __del__(self) -> None:
         """Destroy the Reachy Mini instance."""
         try:
             if hasattr(self, "client") and self.client is not None:

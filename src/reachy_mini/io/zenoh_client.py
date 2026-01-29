@@ -364,8 +364,7 @@ class TaskState:
     error: str | None
 
 
-# Add __del__ method to ZenohClient class
-def _zenoh_client_del(self: ZenohClient) -> None:
+def _zenoh_client_del(self: ZenohClient) -> None:  # type: ignore[misc]
     """Destructor to ensure Zenoh resources are released."""
     try:
         if hasattr(self, 'session') and self.session:
@@ -374,4 +373,4 @@ def _zenoh_client_del(self: ZenohClient) -> None:
         # Ignore errors in destructor
         pass
 
-ZenohClient.__del__ = _zenoh_client_del
+ZenohClient.__del__ = _zenoh_client_del  # type: ignore[attr-defined]

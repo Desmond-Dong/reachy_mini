@@ -292,8 +292,9 @@ class GStreamerCamera(CameraBase):
                         self.logger.debug(f"Found {cam_name} camera")
                         monitor.stop()
                         return cam_name, camera_specs
-monitor.stop()
         
+        monitor.stop()
+
         self.logger.debug("No camera found, returning empty path")
         return "", None
 
@@ -304,6 +305,6 @@ monitor.stop()
                 self._loop.quit()
             if hasattr(self, 'pipeline') and self.pipeline:
                 self.pipeline.set_state(Gst.State.NULL)
-        except Exception as e:
+        except Exception:
             # Ignore errors in destructor
             pass
