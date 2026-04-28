@@ -215,15 +215,15 @@ Static Spaces go live in ~10 s. **The live URL is `https://<username>-<app-name>
 
 State: `disconnected` → `connect()` → `connected` → `startSession(robotId)` → `streaming`.
 
-Commands: `setHeadPose(r,p,y°)`, `setAntennas(right°, left°)`, `playSound(file)`, `setAudioMuted(bool)`, `setMicMuted(bool)`, `sendRaw(obj)`, `getVersion()`.
+Commands: `setHeadRpyDeg(r°,p°,y°)`, `setAntennasDeg(right°, left°)`, `setBodyYawDeg(yaw°)`, `setTarget({ head?: number[16], antennas?: [rRad, lRad], body_yaw?: rad })` (atomic raw-units update), `playSound(file)`, `setAudioMuted(bool)`, `setMicMuted(bool)`, `sendRaw(obj)`, `getVersion()`. Math utilities exported from the module: `rpyToMatrix`, `matrixToRpy`, `degToRad`, `radToDeg`.
 
 Speaker / mic volume: `getVolume()` → 0-100, `setVolume(0-100)`, `getMicrophoneVolume()`, `setMicrophoneVolume(0-100)`. All return a `Promise`; `setVolume` resolves with the value the server actually applied (may be clamped/rounded).
 
-Torque / wake: `setMotorMode("enabled"|"disabled"|"gravity_compensation")`, `wakeUp()`, `gotoSleep()`, `isAwake()`, `ensureAwake()`. `robot.robotState.motorMode` reflects the live state.
+Torque / wake: `setMotorMode("enabled"|"disabled"|"gravity_compensation")`, `wakeUp()`, `gotoSleep()`, `isAwake()`, `ensureAwake()`. `robot.robotState.motor_mode` reflects the live state.
 
 Lifecycle: `authenticate()` / `login()` / `connect()` / `startSession()` / `stopSession()` / `disconnect()` / `logout()`. Video: `attachVideo(<video>)` returns a detach fn.
 
-**Always call `await robot.ensureAwake()` right after `startSession()`** — otherwise if the robot is in the sleep pose (torque off, head on the base) every `setHeadPose` / `setAntennas` is silently ignored and the app looks broken. `ensureAwake()` is a no-op when the robot is already awake (including gravity-compensation mode), so it's safe to call unconditionally at startup.
+**Always call `await robot.ensureAwake()` right after `startSession()`** — otherwise if the robot is in the sleep pose (torque off, head on the base) every `setHeadRpyDeg` / `setAntennasDeg` is silently ignored and the app looks broken. `ensureAwake()` is a no-op when the robot is already awake (including gravity-compensation mode), so it's safe to call unconditionally at startup.
 
 Events: `connected`, `disconnected`, `robotsChanged`, `streaming`, `sessionStopped`, `sessionRejected` (robot busy — inspect `e.detail.activeApp`), `state` (every ~500 ms), `videoTrack`, `micSupported`, `error`.
 
@@ -267,7 +267,7 @@ Rule of thumb: for UI-heavy iteration (CSS, slider behaviour, state machine wiri
 | Symptom | Cause |
 |---|---|
 | `robot.login()` fails / redirects to `about:blank` | Running via `file://` or localhost — OAuth only works on the live Space domain. |
-| Head doesn't move | `setHeadPose` called before `startSession()` resolved. Check the return value. |
+| Head doesn't move | `setHeadRpyDeg` called before `startSession()` resolved. Check the return value. |
 | Head doesn't move, session *is* streaming | Robot is asleep (torque off). Call `await robot.ensureAwake()` after `startSession()`. |
 | Audio stays silent after `setAudioMuted(false)` | Browser requires unmute inside a user-gesture handler. |
 | `sessionRejected` | Robot is locked by another app. Surface `e.detail.activeApp` in the UI. |
@@ -280,7 +280,7 @@ Rule of thumb: for UI-heavy iteration (CSS, slider behaviour, state machine wiri
 
 The daemon exposes an HTTP/WebSocket API at `http://{daemon-ip}:8000/api`.
 
-> REST and the JS SDK's WebRTC data channel are **sibling transports** into the same `process_command()` backend on the daemon — WebRTC is a JSON subset (motion, audio, state). Commands you send from JS (`setHeadPose`, `setAntennas`, …) reach the same handler as the corresponding REST endpoints; picking one transport or the other is a deployment choice, not a functional one.
+> REST and the JS SDK's WebRTC data channel are **sibling transports** into the same `process_command()` backend on the daemon — WebRTC is a JSON subset (motion, audio, state). Commands you send from JS (`setHeadRpyDeg`, `setAntennasDeg`, …) reach the same handler as the corresponding REST endpoints; picking one transport or the other is a deployment choice, not a functional one.
 
 - **Lite**: `localhost:8000` (daemon runs on your machine)
 - **Wireless**: `reachy-mini.local:8000` or the robot's IP address
