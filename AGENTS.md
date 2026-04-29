@@ -137,7 +137,7 @@ See and run `examples/minimal_demo.py` - demonstrates connection, head motion, a
 >
  **Mimicking what is done in this example is the fastest path to a working app.**
 
-Don't necessarily clone it verbatim — feel free to trim panels, remove features, and tweak the UI as needed. But the core patterns (SDK wiring, event handling, session management, media flow) are already solved there; start by understanding how it works before scaffolding something new.
+Don't necessarily clone it verbatim — feel free to trim panels, remove features, and tweak the UI as needed. But the core patterns (SDK wiring, event handling, session management, media flow, responsive mobile layout) are already solved there; start by understanding how it works before scaffolding something new. **Default to a mobile-friendly responsive design** (most users open Spaces on phones) — see the section below.
 
 Browser apps that control a Reachy Mini remotely over WebRTC. **The app IS a static Hugging Face Space**, not something installed on the robot. Any HF-authenticated user can open the Space URL from anywhere and reach any robot they have access to, through the central signaling server.
 
@@ -149,6 +149,20 @@ Browser apps that control a Reachy Mini remotely over WebRTC. **The app IS a sta
 - **Off-robot compute** — work lives in the browser (static Space) or in the Space backend (Gradio/Docker variants). The robot stays a pure IO device.
 - **Bidirectional media** — robot camera/mic → browser; optionally user's mic → robot speaker.
 - **Clean version pinning** — each app imports the SDK from a specific GitHub tag; stable even as the SDK advances.
+
+### Design for mobile first — most users will open the Space on a phone
+
+Unless the user explicitly asks for a desktop-only / kiosk / dev-tool UI, **assume the app will be opened on a smartphone** and design accordingly. The Space URL is shareable, and "open this link on your phone and play with the robot" is the most common end-user flow.
+
+Practical rules:
+- Include `<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />` in `<head>` (the `webrtc_example` already does).
+- Use fluid widths and `rem`/`vh`/`vw` units, not fixed pixel layouts. Stack panels vertically by default; reserve side-by-side layouts for `@media (min-width: 768px)`.
+- Touch-friendly hit targets: ≥ 44×44 px buttons, sliders with comfortable thumbs.
+- No hover-only affordances. Anything reachable by mouse-hover must also be reachable by tap.
+- Test in Chrome devtools' phone emulation before declaring the app done.
+- Bidirectional audio + camera permissions on iOS Safari are the most fragile path — verify on a real iPhone if the app uses them.
+
+The `webrtc_example` is already responsive; cloning it gets you the mobile baseline for free. Don't undo it by hardcoding desktop widths in your edits.
 
 ### SDK import — strongly prefer an immutable ref (tag or commit SHA)
 
@@ -291,6 +305,7 @@ Rule of thumb: for UI-heavy iteration (CSS, slider behaviour, state machine wiri
 | Audio stays silent after `setAudioMuted(false)` | Browser requires unmute inside a user-gesture handler. |
 | `sessionRejected` | Robot is locked by another app. Surface `e.detail.activeApp` in the UI. |
 | Stream laggy | See buffer-lag overlay in `webrtc_example/index.html`; > 500 ms jitter = network issue. |
+| UI broken on phone | Hardcoded pixel widths or desktop-only layout. Use the `webrtc_example` viewport meta + fluid units; test in Chrome devtools phone emulation. |
 | Volume slider floods the data channel | Wire `setVolume` on the slider's `'change'` event (release) — not `'input'` (per-pixel). Sync once on streaming-start with `await robot.getVolume()` to reflect the robot's real level, then reflect the value that `setVolume` resolves with back into the slider. |
 
 ---
