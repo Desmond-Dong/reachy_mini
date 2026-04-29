@@ -129,6 +129,16 @@ See and run `examples/minimal_demo.py` - demonstrates connection, head motion, a
 
 ## Live/Web/JS Apps
 
+> ## START HERE: clone `webrtc_example` and modify it.
+>
+> **Live Space (run it, read the source):** https://huggingface.co/spaces/cduss/webrtc_example
+>
+> This is the **canonical reference implementation** 
+>
+ **Mimicking what is done in this example is the fastest path to a working app.**
+
+Don't necessarily clone it verbatim — feel free to trim panels, remove features, and tweak the UI as needed. But the core patterns (SDK wiring, event handling, session management, media flow) are already solved there; start by understanding how it works before scaffolding something new.
+
 Browser apps that control a Reachy Mini remotely over WebRTC. **The app IS a static Hugging Face Space**, not something installed on the robot. Any HF-authenticated user can open the Space URL from anywhere and reach any robot they have access to, through the central signaling server.
 
 > **Full walkthrough**: [`docs/source/SDK/javascript-sdk.md`](docs/source/SDK/javascript-sdk.md) — architecture diagram, end-to-end deployment, complete SDK reference. The section below is a quick-start; read the full doc when scaffolding something non-trivial.
@@ -140,11 +150,18 @@ Browser apps that control a Reachy Mini remotely over WebRTC. **The app IS a sta
 - **Bidirectional media** — robot camera/mic → browser; optionally user's mic → robot speaker.
 - **Clean version pinning** — each app imports the SDK from a specific GitHub tag; stable even as the SDK advances.
 
-### SDK import — pin to a tag, pinning to `@main` is considered bad practice and does not benefit from the stability guarantees of a tagged release. Always pin to a specific `v*` tag.
+### SDK import — strongly prefer an immutable ref (tag or commit SHA)
+
+For anything you'd want to be stable, pin to either a `v*` **tag** (preferred for releases) or a 40-char **commit SHA** (when you need an unreleased SDK feature, like the live `webrtc_example` does). Both are immutable on jsDelivr. Pinning to a branch like `@main` works, but means the app can break on any SDK change — fine for early prototyping, risky for anything you share.
 
 ```html
 <script type="module">
+  // Tagged release — preferred
   import { ReachyMini } from "https://cdn.jsdelivr.net/gh/pollen-robotics/reachy_mini@v1.6.4/js/reachy-mini.js";
+
+  // Or a specific commit SHA — for unreleased SDK changes
+  // import { ReachyMini } from "https://cdn.jsdelivr.net/gh/pollen-robotics/reachy_mini@e8ba0b3dfcd48af528a8223eb2f2d58986204c94/js/reachy-mini.js";
+
   const robot = new ReachyMini({ appName: "my-app" });
 </script>
 ```
@@ -159,9 +176,11 @@ git ls-remote --tags --refs --sort=-v:refname \
   | head -1 | awk -F/ '{print $NF}'
 ```
 
-**When extending an existing app**, re-check for a newer tag and bump only if the app needs it. Stale pins are fine; `@main` is not — apps would break on any SDK change.
+**When extending an existing app**, re-check for a newer tag and bump only if the app needs it. Stale pins are fine. Branch pins (`@main`, etc.) work but trade stability for freshness — use them deliberately, not by default.
 
 ### Create the Space from scratch
+
+> **Reminder**: don't actually scaffold "from scratch." Start by **copying [`../hfspace/webrtc_example/`](https://huggingface.co/spaces/cduss/webrtc_example)** (or the live Space) and trimming. The steps below are for the rare case where the example doesn't apply.
 
 The app *is* the Space repo. Workflow:
 
@@ -197,8 +216,8 @@ tags:
 ---
 ```
 
-- **`index.html`** — copy from the reference example (see below) and trim.
-- **`style.css`** — copy or write from scratch.
+- **`index.html`** — **copy from [`../hfspace/webrtc_example/index.html`](https://huggingface.co/spaces/cduss/webrtc_example)** and trim panels you don't need. Do not write from scratch.
+- **`style.css`** — copy from the same example, then tweak.
 
 **4. Create + push:**
 
