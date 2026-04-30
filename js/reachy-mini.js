@@ -649,12 +649,41 @@ export class ReachyMini extends EventTarget {
      * @param {number[]} [target.antennas] ``[rightRad, leftRad]``.
      * @param {number} [target.body_yaw] Body yaw in radians.
      * @returns {boolean} false if the data channel is not open.
+     * @throws {TypeError} if any provided field has the wrong shape or
+     *   contains a non-finite value (NaN, Infinity). Validation runs at
+     *   the JS boundary so caller mistakes surface with a stack trace
+     *   pointing to the call site, not as a confusing daemon-side error.
      */
     setTarget({ head, antennas, body_yaw } = {}) {
         const cmd = { type: "set_full_target" };
-        if (head !== undefined) cmd.head = head;
-        if (antennas !== undefined) cmd.antennas = antennas;
-        if (body_yaw !== undefined) cmd.body_yaw = body_yaw;
+        if (head !== undefined) {
+            if (!Array.isArray(head) || head.length !== 16
+                || !head.every((n) => Number.isFinite(n))) {
+                throw new TypeError(
+                    'setTarget: head must be a 16-element flat row-major 4×4 matrix '
+                    + `of finite numbers; got ${Array.isArray(head) ? `Array(${head.length})` : typeof head}`
+                );
+            }
+            cmd.head = head;
+        }
+        if (antennas !== undefined) {
+            if (!Array.isArray(antennas) || antennas.length !== 2
+                || !antennas.every((n) => Number.isFinite(n))) {
+                throw new TypeError(
+                    'setTarget: antennas must be [rightRad, leftRad] (2 finite numbers); '
+                    + `got ${Array.isArray(antennas) ? `Array(${antennas.length})` : typeof antennas}`
+                );
+            }
+            cmd.antennas = antennas;
+        }
+        if (body_yaw !== undefined) {
+            if (!Number.isFinite(body_yaw)) {
+                throw new TypeError(
+                    `setTarget: body_yaw must be a finite number (radians); got ${body_yaw}`
+                );
+            }
+            cmd.body_yaw = body_yaw;
+        }
         return this._sendCommand(cmd);
     }
 
